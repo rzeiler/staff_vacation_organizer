@@ -5,6 +5,7 @@ namespace VacationManagement.Controllers
     using VacationManagement.Models;
     using VacationManagement.Services;
     using VacationManagement.Hubs;
+    using VacationManagement.DTOs;
 
     [ApiController]
     [Route("api/[controller]")]
@@ -20,7 +21,7 @@ namespace VacationManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Vacation>>> GetVacations([FromQuery] int? year, [FromQuery] int? employeeId)
+        public async Task<ActionResult<List<VacationDto>>> GetVacations([FromQuery] int? year, [FromQuery] int? employeeId)
         {
             return await _vacationService.GetVacationsAsync(year, employeeId);
         }
@@ -33,20 +34,39 @@ namespace VacationManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Vacation>> Create(Vacation vacation)
+        public async Task<ActionResult<Vacation>> Create(CreateVacationDto dto)
         {
+            var vacation = new Vacation
+            {
+                EmployeeId = dto.EmployeeId,
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
+                Description = dto.Description,
+                Status = dto.Status
+            };
+
             var created = await _vacationService.CreateAsync(vacation);
             await _hubContext.Clients.All.SendAsync("VacationCreated", created);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<Vacation>> Update(int id, Vacation vacation)
+        public async Task<ActionResult<VacationDto>> Update(int id, CreateVacationDto dto)
         {
+            var vacation = new Vacation
+            {
+                EmployeeId = dto.EmployeeId,
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
+                Description = dto.Description,
+                Status = dto.Status
+            };
+
             var updated = await _vacationService.UpdateAsync(id, vacation);
             if (updated == null) return NotFound();
-            
+
             await _hubContext.Clients.All.SendAsync("VacationUpdated", updated);
+
             return updated;
         }
 

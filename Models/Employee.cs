@@ -21,7 +21,7 @@ namespace VacationManagement.Models
         [Range(0, 50)]
         public int VacationDaysPerYear { get; set; } = 30;
         
-        public List<Vacation> Vacations { get; set; } = new();
+        public List<Vacation> Vacations { get; set; } = new(0);
         
         public string FullName => $"{FirstName} {LastName}";
     }

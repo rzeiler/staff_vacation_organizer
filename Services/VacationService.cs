@@ -2,6 +2,7 @@ namespace VacationManagement.Services
 {
     using Microsoft.EntityFrameworkCore;
     using VacationManagement.Data;
+    using VacationManagement.DTOs;
     using VacationManagement.Models;
 
     public class VacationService : IVacationService
@@ -13,7 +14,7 @@ namespace VacationManagement.Services
             _context = context;
         }
 
-        public async Task<List<Vacation>> GetVacationsAsync(int? year = null, int? employeeId = null)
+        public async Task<List<DTOs.VacationDto>> GetVacationsAsync(int? year = null, int? employeeId = null)
         {
             var query = _context.Vacations.Include(v => v.Employee).AsQueryable();
 
@@ -23,7 +24,25 @@ namespace VacationManagement.Services
             if (employeeId.HasValue)
                 query = query.Where(v => v.EmployeeId == employeeId);
 
-            return await query.OrderBy(v => v.StartDate).ToListAsync();
+            var list = await query
+            .OrderBy(v => v.StartDate)
+            .Select(
+                s => new DTOs.VacationDto
+                {
+                    Id = s.Id,
+                    EmployeeId = s.EmployeeId,
+                    Description = s.Description,
+                    StartDate = s.StartDate,
+                    EndDate = s.EndDate,
+                    Status = s.Status,
+                    Employee = new DTOs.EmployeeDto
+                    {
+                        Id = s.EmployeeId,
+                        LastName = s.Employee.LastName
+                    }
+                }) .ToListAsync();
+            
+            return list;
         }
 
         public async Task<Vacation?> GetByIdAsync(int id)
@@ -40,7 +59,7 @@ namespace VacationManagement.Services
             return await GetByIdAsync(vacation.Id) ?? vacation;
         }
 
-        public async Task<Vacation?> UpdateAsync(int id, Vacation vacation)
+        public async Task<VacationDto?> UpdateAsync(int id, Vacation vacation)
         {
             var existingVacation = await _context.Vacations.FindAsync(id);
             if (existingVacation == null) return null;
@@ -51,7 +70,28 @@ namespace VacationManagement.Services
             existingVacation.Status = vacation.Status;
 
             await _context.SaveChangesAsync();
-            return await GetByIdAsync(id);
+
+            var s = await GetByIdAsync(id);
+
+
+            var updatedDto = new VacationDto
+            {
+               Id = s.Id,
+                    EmployeeId = s.EmployeeId,
+                    Description = s.Description,
+                    StartDate = s.StartDate,
+                    EndDate = s.EndDate,
+                    Status = s.Status,
+                    Employee = new DTOs.EmployeeDto
+                    {
+                        Id = s.EmployeeId,
+                        LastName = s.Employee.LastName
+                    }
+            };
+
+
+
+            return updatedDto;
         }
 
         public async Task<bool> DeleteAsync(int id)

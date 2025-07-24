@@ -15,9 +15,8 @@ namespace VacationManagement.Services
 
         public async Task<List<Employee>> GetAllAsync()
         {
-            return await _context.Employees
-                .Include(e => e.Vacations)
-                .ToListAsync();
+            return await _context.Employees.ToListAsync();
+                // .Include(e => e.Vacations)
         }
 
         public async Task<Employee?> GetByIdAsync(int id)
@@ -30,9 +29,9 @@ namespace VacationManagement.Services
         public async Task<List<Employee>> SearchAsync(string query)
         {
             return await _context.Employees
-                .Where(e => e.FirstName.Contains(query) || 
-                           e.LastName.Contains(query) || 
-                           e.Email.Contains(query))
+                .Where(e => e.FirstName.ToLower().Contains(query.ToLower()) || 
+                           e.LastName.ToLower().Contains(query.ToLower()) || 
+                           e.Email.ToLower().Contains(query.ToLower()))
                 .Include(e => e.Vacations)
                 .ToListAsync();
         }
